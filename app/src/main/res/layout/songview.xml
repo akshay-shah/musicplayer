@@ -9,8 +9,9 @@
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/imgViewCover"
         android:layout_width="0dp"
-        android:layout_height="80dp"
+        android:layout_height="wrap_content"
         android:layout_margin="10dp"
+        android:src="@drawable/music_song"
         android:layout_weight="0.75" />
 
     <LinearLayout

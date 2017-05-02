@@ -79,23 +79,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Thread th = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (Song s : songList) {
-                    Cursor cursor = MainActivity.this.managedQuery(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-                            new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
-                            MediaStore.Audio.Albums._ID + "=?",
-                            new String[]{String.valueOf(s.getAlbumId())},
-                            null);
-                    if (cursor.moveToFirst()) {
-                        String path = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
-                        s.setPath(path);
-                    }
-                }
-            }
-        });
-        th.start();
+//        Thread th = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                for (Song s : songList) {
+//                    Cursor cursor = MainActivity.this.managedQuery(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+//                            new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
+//                            MediaStore.Audio.Albums._ID + "=?",
+//                            new String[]{String.valueOf(s.getAlbumId())},
+//                            null);
+//                    if (cursor.moveToFirst()) {
+//                        String path = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
+//                        s.setPath(path);
+//                    }
+//                }
+//            }
+//        });
+//        th.start();
 
 
 

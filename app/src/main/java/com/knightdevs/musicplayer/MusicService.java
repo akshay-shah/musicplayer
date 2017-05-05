@@ -57,7 +57,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-
+        setSong(songPosn+1);
+        playSong();
     }
 
     @Override

@@ -81,6 +81,7 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongViewHold
         Song song = songList.get(position);
         holder.textViewSongTitle.setText(song.getTitle());
         holder.textViewSongArtist.setText(song.getArtistName());
+        holder.imgViewCover.setTag(position);
 //        String seconds = String.valueOf((song.getSongLength()  % 60000) / 1000);
 //        if(seconds.length()==1){
 //            seconds=seconds+"0";

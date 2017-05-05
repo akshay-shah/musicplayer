@@ -21,12 +21,15 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.knightdevs.musicplayer.pojo.Song;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity implements SongsAdapter.OnClickListener {
 
@@ -45,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
         recycleSongsView = (RecyclerView) findViewById(R.id.recycleSongsView);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                 && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WAKE_LOCK},
                     101);
             return;
         } else {
@@ -157,6 +160,15 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
 
     @Override
     public void onItemClickListener(View view) {
+        View circularView = ((ViewGroup)view).getChildAt(0);
+        musicSrv.setSong(Integer.parseInt(circularView.getTag().toString()));
+        musicSrv.playSong();
+    }
 
+    @Override
+    protected void onDestroy() {
+        stopService(playIntent);
+        musicSrv=null;
+        super.onDestroy();
     }
 }

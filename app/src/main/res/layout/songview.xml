@@ -4,20 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
+    android:paddingBottom="10dp"
+    android:paddingTop="10dp"
     android:weightSum="3">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/imgViewCover"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:src="@drawable/music_song"
-        android:layout_weight="0.75" />
+        android:layout_margin="5dp"
+        android:layout_weight="0.50"
+        android:src="@drawable/music_song" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="2"
+        android:layout_weight="2.25"
         android:orientation="vertical"
         android:weightSum="2">
 
@@ -29,10 +31,10 @@
             android:ellipsize="end"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:textSize="20dp"
-            android:textStyle="bold"
             android:text="Ae Dil he mushkil"
-            android:textColor="#fff" />
+            android:textColor="#fff"
+            android:textSize="20dp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textViewSongArtist"
@@ -46,12 +48,17 @@
             android:textColor="#fff" />
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/imgViewDetail"
+    <RelativeLayout
         android:layout_width="0dp"
-        android:layout_weight="0.25"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:src="@drawable/detail_option" />
+        android:layout_height="match_parent"
+        android:layout_weight="0.25">
+
+        <ImageView
+            android:id="@+id/imgViewDetail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/detail_option" />
+    </RelativeLayout>
 
 </LinearLayout>

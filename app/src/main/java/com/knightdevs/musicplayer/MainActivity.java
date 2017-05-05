@@ -1,11 +1,16 @@
 package com.knightdevs.musicplayer;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -15,6 +20,7 @@ import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 
 import com.knightdevs.musicplayer.pojo.Song;
 
@@ -22,10 +28,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SongsAdapter.OnClickListener {
 
     private ArrayList<Song> songList;
     private RecyclerView recycleSongsView;
+    private MusicService musicSrv;
+    private Intent playIntent;
+    private boolean musicBound=false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +52,16 @@ public class MainActivity extends AppCompatActivity {
             setupDasboard();
         }
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(playIntent==null){
+            playIntent = new Intent(this, MusicService.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
     }
 
     private void setupDasboard() {
@@ -99,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        SongsAdapter adapter = new SongsAdapter(songList, this);
+        SongsAdapter adapter = new SongsAdapter(songList, MainActivity.this);
         recycleSongsView.setLayoutManager(new LinearLayoutManager(this));
         recycleSongsView.setItemAnimator(new DefaultItemAnimator());
         recycleSongsView.setAdapter(adapter);
@@ -115,5 +135,28 @@ public class MainActivity extends AppCompatActivity {
                 // User refused to grant permission.
             }
         }
+    }
+
+    private ServiceConnection musicConnection = new ServiceConnection(){
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicService.MusicBinder binder = (MusicService.MusicBinder)service;
+            //get service
+            musicSrv = binder.getService();
+            //pass list
+            musicSrv.setList(songList);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
+
+    @Override
+    public void onItemClickListener(View view) {
+
     }
 }

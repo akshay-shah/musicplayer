@@ -26,6 +26,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private ArrayList<Song> songs;
     private int songPosn = 0;
     private final IBinder musicBind = new MusicBinder();
+    private static boolean isPlaying = false;
 
     @Override
     public void onCreate() {
@@ -57,7 +58,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        setSong(songPosn+1);
+        setSong(songPosn + 1);
         playSong();
     }
 
@@ -78,6 +79,13 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         return false;
     }
 
+    public String[] upDateBottomSheet() {
+        Song playSong = songs.get(songPosn);
+        String title = playSong.getTitle();
+        String artist = playSong.getArtistName();
+        return new String[]{title, artist};
+    }
+
     public class MusicBinder extends Binder {
         MusicService getService() {
             return MusicService.this;
@@ -96,7 +104,24 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         } catch (Exception e) {
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
+        isPlaying = true;
         player.prepareAsync();
+    }
+
+    public void pauseSong() {
+        isPlaying = false;
+        player.pause();
+    }
+
+    public void startSong() {
+        if (!isPlaying()) {
+            player.start();
+            isPlaying = true;
+        }
+    }
+
+    public boolean isPlaying() {
+        return isPlaying;
     }
 
     public void setSong(int songIndex) {

@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +23,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.knightdevs.musicplayer.pojo.Song;
 
@@ -38,14 +41,17 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
     private MusicService musicSrv;
     private Intent playIntent;
     private boolean musicBound=false;
+    private View bottomSheetLayout;
+    private BottomSheetBehavior mBottomSheetBehaviour;
+    private ImageView bottomSheetPlayPause;
+    private TextView bottomSheetSongTitle,bottomSheetwSongArtist;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        songList = new ArrayList<>();
-        recycleSongsView = (RecyclerView) findViewById(R.id.recycleSongsView);
+        init();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                 && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WAKE_LOCK},
@@ -55,6 +61,29 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
             setupDasboard();
         }
 
+    }
+
+    private void init() {
+        songList = new ArrayList<>();
+        recycleSongsView = (RecyclerView) findViewById(R.id.recycleSongsView);
+        bottomSheetPlayPause = (ImageView) findViewById(R.id.bottomSheetPlayPause);
+        bottomSheetSongTitle = (TextView) findViewById(R.id.bottomSheetSongTitle);
+        bottomSheetwSongArtist = (TextView) findViewById(R.id.bottomSheetwSongArtist);
+        bottomSheetLayout = findViewById(R.id.bottomSheetLayout);
+        mBottomSheetBehaviour = BottomSheetBehavior.from(bottomSheetLayout);
+        mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
+        bottomSheetPlayPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(musicSrv.isPlaying()){
+                    musicSrv.pauseSong();
+                    bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_btn));
+                }else {
+                    musicSrv.startSong();
+                    bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
+                }
+            }
+        });
     }
 
     @Override
@@ -163,6 +192,10 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
         View circularView = ((ViewGroup)view).getChildAt(0);
         musicSrv.setSong(Integer.parseInt(circularView.getTag().toString()));
         musicSrv.playSong();
+        String[] songInfo = musicSrv.upDateBottomSheet();
+        bottomSheetSongTitle.setText(songInfo[0]);
+        bottomSheetwSongArtist.setText(songInfo[1]);
+        bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
     }
 
     @Override

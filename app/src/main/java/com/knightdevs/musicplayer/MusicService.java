@@ -29,13 +29,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private final IBinder musicBind = new MusicBinder();
     private static boolean isPlaying = false;
     public OnUpdateUIListener uiListener;
+    private SharePreferenceClass prefs;
 
     @Override
     public void onCreate() {
         super.onCreate();
         initPlayer();
-
-
+        prefs = new SharePreferenceClass(this);
+        prefs.init();
     }
 
     private void initPlayer() {
@@ -64,7 +65,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         setSong(songPosn + 1);
         playSong();
         String[] info = upDateBottomSheet();
-        uiListener.changeUI(info[0],info[1]);
+        uiListener.changeUI(info[0], info[1]);
     }
 
     @Override
@@ -97,7 +98,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
     }
 
-    public void setUiListener(OnUpdateUIListener listener){
+    public void setUiListener(OnUpdateUIListener listener) {
         this.uiListener = listener;
     }
 
@@ -129,6 +130,13 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
     }
 
+    public void saveSongs(){
+        Song playSong = songs.get(songPosn);
+        prefs.putTitleString(playSong.getTitle());
+        prefs.putArtistName(playSong.getArtistName());
+        prefs.putSongID(playSong.getSongId());
+    }
+
     public boolean isPlaying() {
         return isPlaying;
     }
@@ -137,8 +145,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         songPosn = songIndex;
     }
 
-    public interface OnUpdateUIListener{
-        void changeUI(String title,String artist);
+    public interface OnUpdateUIListener {
+        void changeUI(String title, String artist);
     }
 
 }

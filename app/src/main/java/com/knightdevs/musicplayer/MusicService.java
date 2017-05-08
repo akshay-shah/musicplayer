@@ -2,6 +2,7 @@ package com.knightdevs.musicplayer;
 
 import android.app.Service;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -27,6 +28,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private int songPosn = 0;
     private final IBinder musicBind = new MusicBinder();
     private static boolean isPlaying = false;
+    public OnUpdateUIListener uiListener;
 
     @Override
     public void onCreate() {
@@ -44,6 +46,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
+
     }
 
     public void setList(ArrayList<Song> theSongs) {
@@ -60,6 +63,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public void onCompletion(MediaPlayer mp) {
         setSong(songPosn + 1);
         playSong();
+        String[] info = upDateBottomSheet();
+        uiListener.changeUI(info[0],info[1]);
     }
 
     @Override
@@ -90,6 +95,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         MusicService getService() {
             return MusicService.this;
         }
+    }
+
+    public void setUiListener(OnUpdateUIListener listener){
+        this.uiListener = listener;
     }
 
     public void playSong() {
@@ -126,6 +135,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     public void setSong(int songIndex) {
         songPosn = songIndex;
+    }
+
+    public interface OnUpdateUIListener{
+        void changeUI(String title,String artist);
     }
 
 }

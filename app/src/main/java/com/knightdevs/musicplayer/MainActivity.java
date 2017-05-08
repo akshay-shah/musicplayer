@@ -34,17 +34,17 @@ import java.util.Comparator;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class MainActivity extends AppCompatActivity implements SongsAdapter.OnClickListener {
+public class MainActivity extends AppCompatActivity implements SongsAdapter.OnClickListener, MusicService.OnUpdateUIListener {
 
     private ArrayList<Song> songList;
     private RecyclerView recycleSongsView;
     private MusicService musicSrv;
     private Intent playIntent;
-    private boolean musicBound=false;
+    private boolean musicBound = false;
     private View bottomSheetLayout;
     private BottomSheetBehavior mBottomSheetBehaviour;
     private ImageView bottomSheetPlayPause;
-    private TextView bottomSheetSongTitle,bottomSheetwSongArtist;
+    private TextView bottomSheetSongTitle, bottomSheetwSongArtist;
 
 
     @Override
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
         init();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
                 && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WAKE_LOCK},
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WAKE_LOCK},
                     101);
             return;
         } else {
@@ -75,10 +75,10 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
         bottomSheetPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(musicSrv.isPlaying()){
+                if (musicSrv.isPlaying()) {
                     musicSrv.pauseSong();
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_btn));
-                }else {
+                } else {
                     musicSrv.startSong();
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
                 }
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
     @Override
     protected void onStart() {
         super.onStart();
-        if(playIntent==null){
+        if (playIntent == null) {
             playIntent = new Intent(this, MusicService.class);
             bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
             startService(playIntent);
@@ -150,7 +150,6 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
 //        th.start();
 
 
-
         SongsAdapter adapter = new SongsAdapter(songList, MainActivity.this);
         recycleSongsView.setLayoutManager(new LinearLayoutManager(this));
         recycleSongsView.setItemAnimator(new DefaultItemAnimator());
@@ -169,13 +168,14 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
         }
     }
 
-    private ServiceConnection musicConnection = new ServiceConnection(){
+    private ServiceConnection musicConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicService.MusicBinder binder = (MusicService.MusicBinder)service;
+            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
             //get service
             musicSrv = binder.getService();
+            musicSrv.setUiListener(MainActivity.this);
             //pass list
             musicSrv.setList(songList);
             musicBound = true;
@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
 
     @Override
     public void onItemClickListener(View view) {
-        View circularView = ((ViewGroup)view).getChildAt(0);
+        View circularView = ((ViewGroup) view).getChildAt(0);
         musicSrv.setSong(Integer.parseInt(circularView.getTag().toString()));
         musicSrv.playSong();
         String[] songInfo = musicSrv.upDateBottomSheet();
@@ -201,7 +201,13 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
     @Override
     protected void onDestroy() {
         stopService(playIntent);
-        musicSrv=null;
+        musicSrv = null;
         super.onDestroy();
+    }
+
+    @Override
+    public void changeUI(String title, String artist) {
+        bottomSheetSongTitle.setText(title);
+        bottomSheetwSongArtist.setText(artist);
     }
 }

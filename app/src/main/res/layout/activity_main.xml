@@ -8,21 +8,39 @@
     android:orientation="vertical"
     tools:context="com.knightdevs.musicplayer.MainActivity">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycleSongsView"
+    <!--<android.support.v7.widget.RecyclerView-->
+    <!--android:id="@+id/recycleSongsView"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"></android.support.v7.widget.RecyclerView>-->
+    <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></android.support.v7.widget.RecyclerView>
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabGravity="fill"
+            app:tabMode="fixed" />
+    </android.support.design.widget.AppBarLayout>
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/viewpager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/bottomSheetLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#29303f"
-        app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
         android:orientation="horizontal"
         android:paddingBottom="10dp"
         android:paddingTop="10dp"
-        android:weightSum="3">
+        android:weightSum="3"
+        app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/imgViewCover"
@@ -71,10 +89,10 @@
 
             <ImageView
                 android:id="@+id/bottomSheetPlayPause"
-                android:layout_margin="5dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
+                android:layout_margin="5dp"
                 android:src="@drawable/play_btn" />
         </RelativeLayout>
 

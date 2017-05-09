@@ -2,43 +2,33 @@ package com.knightdevs.musicplayer;
 
 import android.Manifest;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.knightdevs.musicplayer.pojo.Song;
-
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-
-import de.hdodenhof.circleimageview.CircleImageView;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SongsAdapter.OnClickListener, MusicService.OnUpdateUIListener {
 
-    private ArrayList<Song> songList;
-    private RecyclerView recycleSongsView;
     private MusicService musicSrv;
     private Intent playIntent;
     private boolean musicBound = false;
@@ -47,7 +37,8 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
     private ImageView bottomSheetPlayPause;
     private TextView bottomSheetSongTitle, bottomSheetwSongArtist;
     private SharePreferenceClass prefs;
-
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,8 +57,6 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
     }
 
     private void init() {
-        songList = new ArrayList<>();
-        recycleSongsView = (RecyclerView) findViewById(R.id.recycleSongsView);
         bottomSheetPlayPause = (ImageView) findViewById(R.id.bottomSheetPlayPause);
         bottomSheetSongTitle = (TextView) findViewById(R.id.bottomSheetSongTitle);
         bottomSheetwSongArtist = (TextView) findViewById(R.id.bottomSheetwSongArtist);
@@ -92,6 +81,20 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
             bottomSheetSongTitle.setText(prefs.getTitleString());
             bottomSheetwSongArtist.setText(prefs.getArtistName());
         }
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(viewPager);
+    }
+
+    private void setupViewPager(ViewPager viewPager) {
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        adapter.addFragment(new AllSongsFragment(), "Songs");
+        adapter.addFragment(new AlbumFragment(), "Album");
+        adapter.addFragment(new ArtistFragment(), "Artist");
+        adapter.addFragment(new PlayListFragment(), "PlayList");
+        viewPager.setAdapter(adapter);
     }
 
     @Override
@@ -105,63 +108,7 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
     }
 
     private void setupDasboard() {
-        ContentResolver musicResolver = getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Uri coverUri = android.provider.MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI;
-        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
-        Cursor coverCursor = musicResolver.query(coverUri, null, null, null, null);
-        if (musicCursor != null && musicCursor.moveToFirst() && coverCursor != null && coverCursor.moveToFirst()) {
-            //get columns
-            int titleColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.TITLE);
-            int idColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media._ID);
-            int albumId = musicCursor.getColumnIndex
-                    (MediaStore.Audio.Media.ALBUM_ID);
-            int artistColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.ARTIST);
-            int durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
-//            int coverColumn = coverCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART);
-            //add songs to list
-            do {
-                long thisId = musicCursor.getLong(idColumn);
-                String thisTitle = musicCursor.getString(titleColumn);
-                String thisArtist = musicCursor.getString(artistColumn);
-                long thisDuration = musicCursor.getLong(durationColumn);
-                long thisAlbumId = musicCursor.getLong(albumId);
-                songList.add(new Song(thisTitle, thisArtist, thisId, thisDuration, thisAlbumId, null));
-            }
-            while (musicCursor.moveToNext() && coverCursor.moveToNext());
-        }
-        Collections.sort(songList, new Comparator<Song>() {
-            public int compare(Song a, Song b) {
-                return a.getTitle().compareTo(b.getTitle());
-            }
-        });
-
-//        Thread th = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                for (Song s : songList) {
-//                    Cursor cursor = MainActivity.this.managedQuery(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-//                            new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
-//                            MediaStore.Audio.Albums._ID + "=?",
-//                            new String[]{String.valueOf(s.getAlbumId())},
-//                            null);
-//                    if (cursor.moveToFirst()) {
-//                        String path = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
-//                        s.setPath(path);
-//                    }
-//                }
-//            }
-//        });
-//        th.start();
-
-
-        SongsAdapter adapter = new SongsAdapter(songList, MainActivity.this);
-        recycleSongsView.setLayoutManager(new LinearLayoutManager(this));
-        recycleSongsView.setItemAnimator(new DefaultItemAnimator());
-        recycleSongsView.setAdapter(adapter);
+        setupViewPager(viewPager);
     }
 
     @Override
@@ -185,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
             musicSrv = binder.getService();
             musicSrv.setUiListener(MainActivity.this);
             //pass list
-            musicSrv.setList(songList);
+//            musicSrv.setList(songList);
             musicBound = true;
         }
 
@@ -219,5 +166,34 @@ public class MainActivity extends AppCompatActivity implements SongsAdapter.OnCl
     public void changeUI(String title, String artist) {
         bottomSheetSongTitle.setText(title);
         bottomSheetwSongArtist.setText(artist);
+    }
+
+    class ViewPagerAdapter extends FragmentPagerAdapter {
+        private final List<Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
+
+        public ViewPagerAdapter(FragmentManager manager) {
+            super(manager);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return mFragmentList.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return mFragmentList.size();
+        }
+
+        public void addFragment(Fragment fragment, String title) {
+            mFragmentList.add(fragment);
+            mFragmentTitleList.add(title);
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mFragmentTitleList.get(position);
+        }
     }
 }

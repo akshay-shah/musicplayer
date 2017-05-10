@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
@@ -18,9 +19,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -79,10 +78,12 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
         bottomSheetwSongArtist = (TextView) findViewById(R.id.bottomSheetwSongArtist);
         bottomSheetLayout = findViewById(R.id.bottomSheetLayout);
         mBottomSheetBehaviour = BottomSheetBehavior.from(bottomSheetLayout);
-        mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
+        mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_HIDDEN);
+        mBottomSheetBehaviour.setPeekHeight(0);
         prefs = new SharePreferenceClass(this);
         prefs.init();
         if (prefs.isInitialized()) {
+            mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
             bottomSheetSongTitle.setText(prefs.getTitleString());
             bottomSheetwSongArtist.setText(prefs.getArtistName());
         }
@@ -93,10 +94,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
                     musicSrv.pauseSong();
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_btn));
                 } else {
-                    if (musicSrv.seekTime()) {
-                        if (prefs.isInitialized())
-                            musicSrv.playSongbyId(prefs.getSongID());
-                    } else {
+                    if (prefs.isInitialized())
+                        musicSrv.playSongbyId(prefs.getSongID());
+                    else {
                         musicSrv.startSong();
                     }
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
@@ -133,6 +133,12 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
             bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
             startService(playIntent);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
     }
 
     private ServiceConnection musicConnection = new ServiceConnection() {
@@ -183,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
 
     @Override
     public void updateOnItemClick() {
+        mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
         String[] songsInfo = musicSrv.upDateBottomSheet();
         bottomSheetSongTitle.setText(songsInfo[0]);
         bottomSheetwSongArtist.setText(songsInfo[1]);

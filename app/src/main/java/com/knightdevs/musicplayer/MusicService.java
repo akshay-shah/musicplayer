@@ -2,7 +2,6 @@ package com.knightdevs.musicplayer;
 
 import android.app.Service;
 import android.content.ContentUris;
-import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -63,6 +62,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onCompletion(MediaPlayer mp) {
         setSong(songPosn + 1);
+        songPosn = songPosn+1;
         playSong();
         String[] info = upDateBottomSheet();
         uiListener.changeUI(info[0], info[1]);
@@ -91,6 +91,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         String artist = playSong.getArtistName();
         return new String[]{title, artist};
     }
+
 
     public class MusicBinder extends Binder {
         MusicService getService() {
@@ -146,6 +147,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     public boolean seekTime() {
+        Log.d("MusicService","SeekTIme"+player.getCurrentPosition());
         if (player.getCurrentPosition() == 0) {
             return true;
         } else

@@ -1,15 +1,10 @@
 package com.knightdevs.musicplayer;
 
 
-import android.content.ComponentName;
 import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -20,8 +15,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.knightdevs.musicplayer.R;
-import com.knightdevs.musicplayer.SongsAdapter;
 import com.knightdevs.musicplayer.pojo.Song;
 
 import java.util.ArrayList;
@@ -65,20 +58,20 @@ public class AllSongsFragment extends Fragment implements SongsAdapter.OnClickLi
 
     private void setupSongsView() {
         ContentResolver musicResolver = getActivity().getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Uri coverUri = android.provider.MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI;
+        Uri musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Uri coverUri = MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI;
         Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
         Cursor coverCursor = musicResolver.query(coverUri, null, null, null, null);
         if (musicCursor != null && musicCursor.moveToFirst() && coverCursor != null && coverCursor.moveToFirst()) {
             //get columns
             int titleColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.TITLE);
+                    (MediaStore.Audio.Media.TITLE);
             int idColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media._ID);
+                    (MediaStore.Audio.Media._ID);
             int albumId = musicCursor.getColumnIndex
                     (MediaStore.Audio.Media.ALBUM_ID);
             int artistColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.ARTIST);
+                    (MediaStore.Audio.Media.ARTIST);
             int durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
 //            int coverColumn = coverCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART);
             //add songs to list
@@ -97,7 +90,7 @@ public class AllSongsFragment extends Fragment implements SongsAdapter.OnClickLi
                 return a.getTitle().compareTo(b.getTitle());
             }
         });
-        updateActivityInterface.setSongList(songList);
+//        updateActivityInterface.setSongList(songList);
         SongsAdapter adapter = new SongsAdapter(songList, getActivity(), this);
         recycleSongsView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recycleSongsView.setItemAnimator(new DefaultItemAnimator());
@@ -127,6 +120,7 @@ public class AllSongsFragment extends Fragment implements SongsAdapter.OnClickLi
     @Override
     public void onItemClickListener(View view) {
         View circularView = ((ViewGroup) view).getChildAt(0);
+        updateActivityInterface.setSongList(songList);
         updateActivityInterface.setSong(Integer.parseInt(circularView.getTag().toString()));
         updateActivityInterface.playSong();
         updateActivityInterface.updateOnItemClick();

@@ -1,10 +1,15 @@
 package com.knightdevs.musicplayer;
 
 
+import android.content.ComponentName;
 import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -27,9 +32,13 @@ import java.util.Comparator;
  * Created by ashah on 9/5/17.
  */
 
-public class AllSongsFragment extends Fragment  {
+public class AllSongsFragment extends Fragment implements MusicService.OnUpdateUIListener, SongsAdapter.OnClickListener, AllSongsFragmentInterface {
     private ArrayList<Song> songList;
     private RecyclerView recycleSongsView;
+    private MusicService musicSrv;
+    private Intent playIntent;
+    private boolean musicBound = false;
+    private MainActivityInterface updateActivityInterface;
 
     public AllSongsFragment() {
     }
@@ -37,7 +46,18 @@ public class AllSongsFragment extends Fragment  {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        updateActivityInterface = (MainActivityInterface) getActivity();
 
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (playIntent == null) {
+            playIntent = new Intent(getActivity(), MusicService.class);
+            getActivity().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            getActivity().startService(playIntent);
+        }
     }
 
     @Nullable
@@ -49,6 +69,23 @@ public class AllSongsFragment extends Fragment  {
         setupSongsView();
         return v;
     }
+
+    private ServiceConnection musicConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+            musicSrv = binder.getService();
+            musicSrv.setUiListener(AllSongsFragment.this);
+            musicSrv.setList(songList);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
 
     private void setupSongsView() {
         ContentResolver musicResolver = getActivity().getContentResolver();
@@ -84,6 +121,10 @@ public class AllSongsFragment extends Fragment  {
                 return a.getTitle().compareTo(b.getTitle());
             }
         });
+        SongsAdapter adapter = new SongsAdapter(songList, getActivity(),this);
+        recycleSongsView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recycleSongsView.setItemAnimator(new DefaultItemAnimator());
+        recycleSongsView.setAdapter(adapter);
 
 //        Thread th = new Thread(new Runnable() {
 //            @Override
@@ -103,13 +144,43 @@ public class AllSongsFragment extends Fragment  {
 //        });
 //        th.start();
 
-
-        SongsAdapter adapter = new SongsAdapter(songList, getActivity());
-        recycleSongsView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recycleSongsView.setItemAnimator(new DefaultItemAnimator());
-        recycleSongsView.setAdapter(adapter);
     }
 
 
+    @Override
+    public void changeUI(String title, String artist) {
+        updateActivityInterface.updateBottomSheet(title, artist);
+    }
 
+    @Override
+    public void onDestroy() {
+        musicSrv.saveSongs();
+        getActivity().stopService(playIntent);
+        musicSrv = null;
+        super.onDestroy();
+    }
+
+    @Override
+    public void onItemClickListener(View view) {
+        View circularView = ((ViewGroup) view).getChildAt(0);
+        musicSrv.setSong(Integer.parseInt(circularView.getTag().toString()));
+        musicSrv.playSong();
+        String[] songInfo = musicSrv.upDateBottomSheet();
+        updateActivityInterface.updateOnItemClick(songInfo);
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return musicSrv.isPlaying();
+    }
+
+    @Override
+    public void startSong() {
+        musicSrv.startSong();
+    }
+
+    @Override
+    public void pauseSong() {
+        musicSrv.pauseSong();
+    }
 }

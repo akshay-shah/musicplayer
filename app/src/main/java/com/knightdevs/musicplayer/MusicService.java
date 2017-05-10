@@ -118,6 +118,22 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         player.prepareAsync();
     }
 
+    public void playSongbyId(Song song){
+        player.reset();
+        Song playSong = songs.get(songPosn);
+        long currSong = playSong.getSongId();
+        Uri trackUri = ContentUris.withAppendedId(
+                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                currSong);
+        try {
+            player.setDataSource(getApplicationContext(), trackUri);
+        } catch (Exception e) {
+            Log.e("MUSIC SERVICE", "Error setting data source", e);
+        }
+        isPlaying = true;
+        player.prepareAsync();
+    }
+
     public void pauseSong() {
         isPlaying = false;
         player.pause();

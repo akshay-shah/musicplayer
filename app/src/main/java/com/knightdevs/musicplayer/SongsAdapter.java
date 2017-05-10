@@ -29,10 +29,10 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongViewHold
     private Context context;
     private OnClickListener listener;
 
-    public SongsAdapter(ArrayList<Song> songList, Context context) {
+    public SongsAdapter(ArrayList<Song> songList, Context context,OnClickListener listener) {
         this.songList = songList;
         this.context = context;
-        listener = (OnClickListener)context;
+        this.listener = listener;
     }
 
     @Override

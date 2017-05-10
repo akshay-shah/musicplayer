@@ -24,10 +24,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.knightdevs.musicplayer.pojo.Song;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements MainActivityInterface {
+public class MainActivity extends AppCompatActivity implements MainActivityInterface, MusicService.OnUpdateUIListener {
 
 
     private View bottomSheetLayout;
@@ -38,10 +40,13 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
     private ViewPager viewPager;
     private TabLayout tabLayout;
     private AllSongsFragment allSongsFragment;
-    private AllSongsFragmentInterface allSongsFragmentInterface;
     private AlbumFragment albumFragment;
     private ArtistFragment artistFragment;
     private PlayListFragment playListFragment;
+    private MusicService musicSrv;
+    private Intent playIntent;
+    private boolean musicBound = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,26 +64,41 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
 
     }
 
+    @Override
+    public void onAttachFragment(android.app.Fragment fragment) {
+        super.onAttachFragment(fragment);
+    }
+
     private void init() {
         allSongsFragment = new AllSongsFragment();
         albumFragment = new AlbumFragment();
         artistFragment = new ArtistFragment();
         playListFragment = new PlayListFragment();
-        allSongsFragmentInterface = (AllSongsFragmentInterface) allSongsFragment;
         bottomSheetPlayPause = (ImageView) findViewById(R.id.bottomSheetPlayPause);
         bottomSheetSongTitle = (TextView) findViewById(R.id.bottomSheetSongTitle);
         bottomSheetwSongArtist = (TextView) findViewById(R.id.bottomSheetwSongArtist);
         bottomSheetLayout = findViewById(R.id.bottomSheetLayout);
         mBottomSheetBehaviour = BottomSheetBehavior.from(bottomSheetLayout);
         mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
+        prefs = new SharePreferenceClass(this);
+        prefs.init();
+        if (prefs.isInitialized()) {
+            bottomSheetSongTitle.setText(prefs.getTitleString());
+            bottomSheetwSongArtist.setText(prefs.getArtistName());
+        }
         bottomSheetPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (allSongsFragmentInterface.isPlaying()) {
-                    allSongsFragmentInterface.pauseSong();
+                if (musicSrv.isPlaying()) {
+                    musicSrv.pauseSong();
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_btn));
                 } else {
-                    allSongsFragmentInterface.startSong();
+                    if (musicSrv.seekTime()) {
+                        if (prefs.isInitialized())
+                            musicSrv.playSongbyId(prefs.getSongID());
+                    } else {
+                        musicSrv.startSong();
+                    }
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
                 }
             }
@@ -89,13 +109,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
 
             }
         });
-        prefs = new SharePreferenceClass(this);
-        prefs.init();
-        if (prefs.isInitialized()) {
-            bottomSheetSongTitle.setText(prefs.getTitleString());
-            bottomSheetwSongArtist.setText(prefs.getArtistName());
-        }
-
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         tabLayout = (TabLayout) findViewById(R.id.tabs);
@@ -111,10 +124,32 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
         viewPager.setAdapter(adapter);
     }
 
+
     @Override
     protected void onStart() {
         super.onStart();
+        if (playIntent == null) {
+            playIntent = new Intent(MainActivity.this, MusicService.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
     }
+
+    private ServiceConnection musicConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+            musicSrv = binder.getService();
+            musicSrv.setUiListener(MainActivity.this);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
 
     private void setupDasboard() {
         setupViewPager(viewPager);
@@ -135,21 +170,44 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
 
     @Override
     protected void onDestroy() {
+        if (musicConnection != null)
+            unbindService(musicConnection);
+        if (musicSrv != null) {
+            musicSrv.saveSongs();
+            stopService(playIntent);
+            musicSrv = null;
+        }
         super.onDestroy();
     }
 
 
     @Override
-    public void updateBottomSheet(String title, String artist) {
+    public void updateOnItemClick() {
+        String[] songsInfo = musicSrv.upDateBottomSheet();
+        bottomSheetSongTitle.setText(songsInfo[0]);
+        bottomSheetwSongArtist.setText(songsInfo[1]);
+        bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
+    }
+
+    @Override
+    public void changeUI(String title, String artist) {
         bottomSheetSongTitle.setText(title);
         bottomSheetwSongArtist.setText(artist);
     }
 
     @Override
-    public void updateOnItemClick(String[] songsInfo) {
-        bottomSheetSongTitle.setText(songsInfo[0]);
-        bottomSheetwSongArtist.setText(songsInfo[1]);
-        bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
+    public void setSong(int position) {
+        musicSrv.setSong(position);
+    }
+
+    @Override
+    public void playSong() {
+        musicSrv.playSong();
+    }
+
+    @Override
+    public void setSongList(ArrayList<Song> songsList) {
+        musicSrv.setList(songsList);
     }
 
 

@@ -118,10 +118,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         player.prepareAsync();
     }
 
-    public void playSongbyId(Song song){
+    public void playSongbyId(long songId) {
         player.reset();
-        Song playSong = songs.get(songPosn);
-        long currSong = playSong.getSongId();
+        long currSong = songId;
         Uri trackUri = ContentUris.withAppendedId(
                 android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 currSong);
@@ -146,7 +145,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
     }
 
-    public void saveSongs(){
+    public boolean seekTime() {
+        if (player.getCurrentPosition() == 0) {
+            return true;
+        } else
+            return false;
+    }
+
+    public void saveSongs() {
         Song playSong = songs.get(songPosn);
         prefs.putTitleString(playSong.getTitle());
         prefs.putArtistName(playSong.getArtistName());

@@ -32,12 +32,9 @@ import java.util.Comparator;
  * Created by ashah on 9/5/17.
  */
 
-public class AllSongsFragment extends Fragment implements MusicService.OnUpdateUIListener, SongsAdapter.OnClickListener, AllSongsFragmentInterface {
+public class AllSongsFragment extends Fragment implements SongsAdapter.OnClickListener {
     private ArrayList<Song> songList;
     private RecyclerView recycleSongsView;
-    private MusicService musicSrv;
-    private Intent playIntent;
-    private boolean musicBound = false;
     private MainActivityInterface updateActivityInterface;
 
     public AllSongsFragment() {
@@ -53,11 +50,6 @@ public class AllSongsFragment extends Fragment implements MusicService.OnUpdateU
     @Override
     public void onStart() {
         super.onStart();
-        if (playIntent == null) {
-            playIntent = new Intent(getActivity(), MusicService.class);
-            getActivity().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            getActivity().startService(playIntent);
-        }
     }
 
     @Nullable
@@ -70,22 +62,6 @@ public class AllSongsFragment extends Fragment implements MusicService.OnUpdateU
         return v;
     }
 
-    private ServiceConnection musicConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
-            musicSrv = binder.getService();
-            musicSrv.setUiListener(AllSongsFragment.this);
-            musicSrv.setList(songList);
-            musicBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            musicBound = false;
-        }
-    };
 
     private void setupSongsView() {
         ContentResolver musicResolver = getActivity().getContentResolver();
@@ -121,7 +97,8 @@ public class AllSongsFragment extends Fragment implements MusicService.OnUpdateU
                 return a.getTitle().compareTo(b.getTitle());
             }
         });
-        SongsAdapter adapter = new SongsAdapter(songList, getActivity(),this);
+        updateActivityInterface.setSongList(songList);
+        SongsAdapter adapter = new SongsAdapter(songList, getActivity(), this);
         recycleSongsView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recycleSongsView.setItemAnimator(new DefaultItemAnimator());
         recycleSongsView.setAdapter(adapter);
@@ -148,39 +125,10 @@ public class AllSongsFragment extends Fragment implements MusicService.OnUpdateU
 
 
     @Override
-    public void changeUI(String title, String artist) {
-        updateActivityInterface.updateBottomSheet(title, artist);
-    }
-
-    @Override
-    public void onDestroy() {
-        musicSrv.saveSongs();
-        getActivity().stopService(playIntent);
-        musicSrv = null;
-        super.onDestroy();
-    }
-
-    @Override
     public void onItemClickListener(View view) {
         View circularView = ((ViewGroup) view).getChildAt(0);
-        musicSrv.setSong(Integer.parseInt(circularView.getTag().toString()));
-        musicSrv.playSong();
-        String[] songInfo = musicSrv.upDateBottomSheet();
-        updateActivityInterface.updateOnItemClick(songInfo);
-    }
-
-    @Override
-    public boolean isPlaying() {
-        return musicSrv.isPlaying();
-    }
-
-    @Override
-    public void startSong() {
-        musicSrv.startSong();
-    }
-
-    @Override
-    public void pauseSong() {
-        musicSrv.pauseSong();
+        updateActivityInterface.setSong(Integer.parseInt(circularView.getTag().toString()));
+        updateActivityInterface.playSong();
+        updateActivityInterface.updateOnItemClick();
     }
 }

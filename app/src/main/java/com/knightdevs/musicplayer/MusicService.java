@@ -5,6 +5,8 @@ import android.content.ContentUris;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.audiofx.AudioEffect;
+import android.media.audiofx.Equalizer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
@@ -29,6 +31,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     private static boolean isPlaying = false;
     public OnUpdateUIListener uiListener;
     private SharePreferenceClass prefs;
+    private Equalizer mEqualizer;
 
     @Override
     public void onCreate() {
@@ -46,6 +49,31 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnErrorListener(this);
+        mEqualizer = new Equalizer(0, player.getAudioSessionId());
+        short bands = mEqualizer.getNumberOfBands();
+        Log.d("MusicApp", "Bands =" + bands);
+        short[] range = mEqualizer.getBandLevelRange();
+        for (int i = 0; i < range.length; i++) {
+            Log.d("MusicApp", "range =" + range[i]);
+        }
+        Log.d("MusicApp", "Presets =" + mEqualizer.getNumberOfPresets());
+//        for (short i = 0; i < mEqualizer.getNumberOfPresets(); i++) {
+//            Log.d("MusicApp", "Presets =" + mEqualizer.getPresetName(i));
+//            mEqualizer.usePreset(i);
+//            Log.d("MusicApp", "BandLevelRangeLower =" + mEqualizer.getBandLevelRange()[0]);
+//            Log.d("MusicApp", "BandLevelRangeUpper =" + mEqualizer.getBandLevelRange()[1]);
+//            short bands1 = mEqualizer.getNumberOfBands();
+//            Log.d("MusicApp", "Bands1 =" + bands);
+//            mEqualizer.setEnabled(true);
+//        }
+        Log.d("MusicApp", "Presets =" + mEqualizer.getPresetName((short)6));
+        mEqualizer.usePreset((short)6);
+        Log.d("MusicApp", "BandLevelRangeLower =" + mEqualizer.getBandLevelRange()[0]);
+        Log.d("MusicApp", "BandLevelRangeUpper =" + mEqualizer.getBandLevelRange()[1]);
+        short bands1 = mEqualizer.getNumberOfBands();
+        Log.d("MusicApp", "Bands1 =" + bands);
+        mEqualizer.setEnabled(true);
+        Log.d("MusicApp", "Current Preset =" + mEqualizer.getCurrentPreset());;
 
     }
 
@@ -62,7 +90,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void onCompletion(MediaPlayer mp) {
         setSong(songPosn + 1);
-        songPosn = songPosn+1;
+        songPosn = songPosn + 1;
         playSong();
         String[] info = upDateBottomSheet();
         uiListener.changeUI(info[0], info[1]);
@@ -105,21 +133,25 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     public void playSong() {
         player.reset();
-        Song playSong = songs.get(songPosn);
-        long currSong = playSong.getSongId();
-        Uri trackUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                currSong);
         try {
-            player.setDataSource(getApplicationContext(), trackUri);
-        } catch (Exception e) {
-            Log.e("MUSIC SERVICE", "Error setting data source", e);
+            Song playSong = songs.get(songPosn);
+            long currSong = playSong.getSongId();
+            Uri trackUri = ContentUris.withAppendedId(
+                    android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    currSong);
+            try {
+                player.setDataSource(getApplicationContext(), trackUri);
+            } catch (Exception e) {
+                Log.e("MUSIC SERVICE", "Error setting data source", e);
+            }
+            isPlaying = true;
+            player.prepareAsync();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         }
-        isPlaying = true;
-        player.prepareAsync();
     }
 
-    public void playSongbyId(long songId) {
+    public void playSongbyId(long songId, String title, String artist) {
         player.reset();
         long currSong = songId;
         Uri trackUri = ContentUris.withAppendedId(
@@ -132,6 +164,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
         isPlaying = true;
         player.prepareAsync();
+        uiListener.changeUI(title, artist);
     }
 
     public void pauseSong() {
@@ -147,7 +180,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     public boolean seekTime() {
-        Log.d("MusicService","SeekTIme"+player.getCurrentPosition());
+        Log.d("MusicService", "SeekTIme" + player.getCurrentPosition());
         if (player.getCurrentPosition() == 0) {
             return true;
         } else

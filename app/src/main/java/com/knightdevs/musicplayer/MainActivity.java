@@ -94,10 +94,10 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
                     musicSrv.pauseSong();
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_btn));
                 } else {
-                    if (prefs.isInitialized())
-                        musicSrv.playSongbyId(prefs.getSongID());
-                    else {
+                    try {
                         musicSrv.startSong();
+                    } catch (NullPointerException e) {
+                        musicSrv.playSongbyId(prefs.getSongID(), prefs.getTitleString(), prefs.getArtistName());
                     }
                     bottomSheetPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_btn));
                 }

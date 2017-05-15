@@ -13,7 +13,6 @@ public class Song {
     long albumId;
 
 
-
     public Song(String title, String artistName, long songId, long songLength, long albumId, String path) {
         this.title = title;
         this.artistName = artistName;
@@ -61,6 +60,7 @@ public class Song {
     public void setPath(String path) {
         this.path = path;
     }
+
     public long getAlbumId() {
         return albumId;
     }

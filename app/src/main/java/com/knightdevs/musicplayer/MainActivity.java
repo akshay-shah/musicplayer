@@ -6,9 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.TabLayout;
@@ -19,14 +25,18 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.knightdevs.musicplayer.pojo.Song;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import info.abdolahi.CircularMusicProgressBar;
 
 public class MainActivity extends AppCompatActivity implements MainActivityInterface, MusicService.OnUpdateUIListener {
 
@@ -45,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
     private MusicService musicSrv;
     private Intent playIntent;
     private boolean musicBound = false;
+    private CircularMusicProgressBar circularMusicProgressBar;
 
 
     @Override
@@ -76,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
         bottomSheetPlayPause = (ImageView) findViewById(R.id.bottomSheetPlayPause);
         bottomSheetSongTitle = (TextView) findViewById(R.id.bottomSheetSongTitle);
         bottomSheetwSongArtist = (TextView) findViewById(R.id.bottomSheetwSongArtist);
+        circularMusicProgressBar = (CircularMusicProgressBar) findViewById(R.id.circularMusicProgressBar);
         bottomSheetLayout = findViewById(R.id.bottomSheetLayout);
         mBottomSheetBehaviour = BottomSheetBehavior.from(bottomSheetLayout);
         mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -83,9 +95,22 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
         prefs = new SharePreferenceClass(this);
         prefs.init();
         if (prefs.isInitialized()) {
-            mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
+            mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            mBottomSheetBehaviour.setPeekHeight(200);
             bottomSheetSongTitle.setText(prefs.getTitleString());
             bottomSheetwSongArtist.setText(prefs.getArtistName());
+            Thread th = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final Bitmap bmp = getAlbumArt(prefs.getAlbumId());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            circularMusicProgressBar.setImageBitmap(bmp);
+                        }
+                    });
+                }
+            });
         }
         bottomSheetPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,6 +131,33 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
         bottomSheetLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+            }
+        });
+
+        mBottomSheetBehaviour.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        Log.d("MusicApp", "State expanded");
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        Log.d("MusicApp", "State collapsed");
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        Log.d("MusicApp", "State dragging");
+                        break;
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                        Log.d("MusicApp", "State hidden");
+                        break;
+                    case BottomSheetBehavior.STATE_SETTLING:
+                        Log.d("MusicApp", "State settling");
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
 
             }
         });
@@ -189,7 +241,8 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
 
     @Override
     public void updateOnItemClick() {
-        mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
+        mBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        mBottomSheetBehaviour.setPeekHeight(200);
         String[] songsInfo = musicSrv.upDateBottomSheet();
         bottomSheetSongTitle.setText(songsInfo[0]);
         bottomSheetwSongArtist.setText(songsInfo[1]);
@@ -244,6 +297,26 @@ public class MainActivity extends AppCompatActivity implements MainActivityInter
         @Override
         public CharSequence getPageTitle(int position) {
             return mFragmentTitleList.get(position);
+        }
+    }
+
+    public Bitmap getAlbumArt(final long albumId) {
+        Bitmap bmp = null;
+        Cursor cursor = MainActivity.this.managedQuery(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
+                MediaStore.Audio.Albums._ID + "=?",
+                new String[]{String.valueOf(albumId)},
+                null);
+        if (cursor.moveToFirst()) {
+            String path = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
+            File imgFile = new File(path);
+            bmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+        }
+        if (bmp != null)
+            return bmp;
+        else {
+            Drawable drw = getResources().getDrawable(R.drawable.music_song);
+            return ((BitmapDrawable) drw).getBitmap();
         }
     }
 }

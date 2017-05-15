@@ -66,14 +66,20 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 //            Log.d("MusicApp", "Bands1 =" + bands);
 //            mEqualizer.setEnabled(true);
 //        }
-        Log.d("MusicApp", "Presets =" + mEqualizer.getPresetName((short)6));
-        mEqualizer.usePreset((short)6);
+        Log.d("MusicApp", "Presets =" + mEqualizer.getPresetName((short) 6));
+        mEqualizer.usePreset((short) 4);
         Log.d("MusicApp", "BandLevelRangeLower =" + mEqualizer.getBandLevelRange()[0]);
         Log.d("MusicApp", "BandLevelRangeUpper =" + mEqualizer.getBandLevelRange()[1]);
+        Log.d("MusicApp", "BandLevel =" + mEqualizer.getBandLevel((short) 0));
+        Log.d("MusicApp", "BandLevel =" + mEqualizer.getBandLevel((short) 1));
+        Log.d("MusicApp", "BandLevel =" + mEqualizer.getBandLevel((short) 2));
+        Log.d("MusicApp", "BandLevel =" + mEqualizer.getBandLevel((short) 3));
+        Log.d("MusicApp", "BandLevel =" + mEqualizer.getBandLevel((short) 4));
         short bands1 = mEqualizer.getNumberOfBands();
-        Log.d("MusicApp", "Bands1 =" + bands);
+        Log.d("MusicApp", "Bands1 =" + bands1);
         mEqualizer.setEnabled(true);
-        Log.d("MusicApp", "Current Preset =" + mEqualizer.getCurrentPreset());;
+        Log.d("MusicApp", "Current Preset =" + mEqualizer.getCurrentPreset());
+//        mEqualizer.setProperties(new Equalizer.Settings());
 
     }
 
@@ -188,10 +194,16 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     public void saveSongs() {
-        Song playSong = songs.get(songPosn);
-        prefs.putTitleString(playSong.getTitle());
-        prefs.putArtistName(playSong.getArtistName());
-        prefs.putSongID(playSong.getSongId());
+        try {
+            Song playSong = songs.get(songPosn);
+            prefs.putTitleString(playSong.getTitle());
+            prefs.putArtistName(playSong.getArtistName());
+            prefs.putSongID(playSong.getSongId());
+            prefs.putAlbumId(playSong.getAlbumId());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public boolean isPlaying() {

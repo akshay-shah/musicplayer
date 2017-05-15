@@ -52,10 +52,20 @@ public class SharePreferenceClass {
         return value;
     }
 
-    public boolean isInitialized(){
-        if(preferences.contains("SongTitle")){
+    public void putAlbumId(long value) {
+        editor.putLong("AlbumId", value);
+        editor.commit();
+    }
+
+    public long getAlbumId() {
+        long value = preferences.getLong("AlbumId", 0);
+        return value;
+    }
+
+    public boolean isInitialized() {
+        if (preferences.contains("SongTitle")) {
             return true;
-        }else
+        } else
             return false;
 
     }

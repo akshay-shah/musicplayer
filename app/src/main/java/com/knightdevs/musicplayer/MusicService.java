@@ -100,6 +100,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         playSong();
         String[] info = upDateBottomSheet();
         uiListener.changeUI(info[0], info[1]);
+
     }
 
     @Override
